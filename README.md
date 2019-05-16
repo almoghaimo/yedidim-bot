@@ -15,7 +15,7 @@ This repository includes all the applications of the Yedidim project. Those appl
 
 Make sure you have the following installed:
 
-- node: Node.js at least version 8, we recommend using https://github.com/creationix/nvm to manage the versions locally
+- node: Node.js at **version 8**, we recommend using https://github.com/creationix/nvm for linux or https://github.com/coreybutler/nvm-windows for windows to manage the versions locally
 - yarn: https://yarnpkg.com/lang/en/docs/install/ (**You need to use yarn, don't use NPM, it will not work**)
 - expo-cli: https://docs.expo.io/versions/latest/introduction/installation#local-development-tool-expo-cli
 - XCode or Android Studio: depending on which platform you want to run the project
@@ -34,7 +34,7 @@ yarn
 Now you need to run the development server.
 
 ```
-yarn start
+yarn start (or expo start)
 ```
 
 That will call expo-cli to start the development server locally to generate the bundle. This also updated the specific Android/iOS files to point to that specific URL on development, so don't be surprised if those files show up as modified in git after that.
