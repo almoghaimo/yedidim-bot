@@ -1,5 +1,6 @@
 import { NOTIFICATION_SEARCH_RADIUS_KM, CategoriesDisplay } from './consts'
-
+const eventUpdatesHandlers = require('./eventUpdatesHandlers')
+import { addTimelineEntry } from '../lib/timeline'
 const {
   sendNotificationToUsers,
   sendNotificationByGeoFireLocation
@@ -36,6 +37,14 @@ exports.sendNotificationBySearchRadius = async (req, res, admin) => {
         admin,
         searchRadius
       )
+
+      await addTimelineEntry({
+        eventId,
+        action: 'הוקפץ לכוננים',
+        who: 'מוקדן',
+        value: `רדיוס ${searchRadius + ' ק״מ' || 'ברירת מחדל'}`
+      })
+
       res.status(200).send('')
     } else {
       res.status(404).send('Did not find event ' + eventId)
@@ -146,7 +155,7 @@ exports.sendVolunteerTestNotification = async (req, res, admin) => {
     res.status(500).send(e)
   }
 }
-let sendEventNotificationToCloseByVolunteers = async (
+const sendEventNotificationToCloseByVolunteers = async (
   eventData,
   notificationTitle,
   admin,

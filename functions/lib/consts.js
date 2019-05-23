@@ -1,3 +1,7 @@
 module.exports = {
-  EventStatus: {Draft: 'draft', Submitted: 'submitted', Archived: 'archived'}
-};
+  EventStatus: {
+    Draft: 'draft',
+    Submitted: 'submitted',
+    Archived: 'archived'
+  }
+}

@@ -25,7 +25,7 @@ exports.manage = functions.https.onRequest((req, res) => {
 exports.onEventCreated = functions.database
   .ref('/events/{eventId}')
   .onCreate((snapshot, context) => {
-    return eventUpdatesHandlers.onEventCreated(snapshot, context)
+    return eventUpdatesHandlers.onEventCreated(snapshot, context, admin)
   })
 
 exports.onStatusUpdated = functions.database

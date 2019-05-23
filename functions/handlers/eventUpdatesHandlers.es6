@@ -1,5 +1,7 @@
-import * as notificationsHandler from './notificationsHandler'
+import { sendEventNotificationToCloseByVolunteers } from './notificationsHandler'
 import * as geoHelper from './geoHelper'
+const EVENT_TIMELINE_ACTIONS = require('../lib/consts').EVENT_TIMELINE_ACTIONS
+import { addTimelineEntry, addTimelineEntryFromStatus } from '../lib/timeline'
 
 exports.onVolunteersLocationsUpdated = (event, context, admin) => {
   const volunteerId = context.params.volunteerId
@@ -55,6 +57,7 @@ exports.onEventStatusUpdate = (event, context, admin) => {
   let promises = [Promise.resolve()]
   let currentIsOpen = calculateIsOpen(currentStatus)
   let previousIsOpen = calculateIsOpen(previousStatus)
+
   if (currentIsOpen !== previousIsOpen) {
     console.log('Setting isOpen ' + currentIsOpen + ' for event ' + eventId)
     promises.push(event.after.ref.parent.child('isOpen').set(currentIsOpen))
@@ -76,8 +79,16 @@ exports.onEventStatusUpdate = (event, context, admin) => {
             eventId,
             eventData
           )
-          resolve()
+          return eventData
         })
+        .then(eventData => {
+          return addTimelineEntryFromStatus(
+            currentStatus,
+            previousStatus,
+            eventData
+          )
+        })
+        .then(() => resolve())
         .catch(e => reject(e))
     })
   )
@@ -90,11 +101,18 @@ exports.onEventStatusUpdate = (event, context, admin) => {
           .once('value')
           .then(eventSnapshot => {
             let eventData = eventSnapshot.val()
-            return notificationsHandler.sendEventNotificationToCloseByVolunteers(
-              eventData,
-              previousStatus === 'assigned' ? 'קריאה חוזרת' : 'קריאה חדשה',
-              admin
-            )
+            return Promise.all([
+              sendEventNotificationToCloseByVolunteers(
+                eventData,
+                previousStatus === 'assigned' ? 'קריאה חוזרת' : 'קריאה חדשה',
+                admin
+              ),
+              addTimelineEntry({
+                eventId,
+                action: 'הוקפץ לכוננים',
+                who: 'אוטומאטי'
+              })
+            ])
           })
           .then(() => resolve())
           .catch(e => reject(e))
@@ -105,12 +123,13 @@ exports.onEventStatusUpdate = (event, context, admin) => {
   return Promise.all(promises)
 }
 
-exports.onEventCreated = (snapshot, context) => {
+exports.onEventCreated = (snapshot, context, admin) => {
   let eventId = context.params.eventId
   console.log('Created event ' + eventId)
   let eventData = snapshot.val()
   let isOpen = calculateIsOpen(eventData.status)
   console.log('Setting isOpen ' + isOpen + ' for event ' + eventId)
+
   return snapshot.ref.child('isOpen').set(isOpen)
 }
 
