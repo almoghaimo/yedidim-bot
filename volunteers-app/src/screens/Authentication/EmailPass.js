@@ -98,7 +98,11 @@ class EmailPassAuthenticationScreen extends React.Component {
 
   handleAuthentication = async () => {
     trackEvent('Navigation', { page: 'EmailPassAuthentication' })
-    this.props.signIn(this.state)
+    const { id } = this.state
+    this.props.signIn({
+      ...this.state,
+      id: id[0] === '0' ? id.substring(1) : id
+    })
   }
 
   render() {
@@ -127,7 +131,8 @@ class EmailPassAuthenticationScreen extends React.Component {
                     keyboardType="numeric"
                     value={phoneNumber}
                     onChangeText={value =>
-                      this.setState({ phoneNumber: value })}
+                      this.setState({ phoneNumber: value })
+                    }
                   />
                 </Item>
                 <Item floatingLabel>
@@ -180,7 +185,8 @@ class EmailPassAuthenticationScreen extends React.Component {
                 {txt => (
                   <RegisterBtn
                     onPress={() =>
-                      Linking.openURL('https://yedidim-il.org/הצטרפו-אלינו/')}
+                      Linking.openURL('https://yedidim-il.org/הצטרפו-אלינו/')
+                    }
                   >
                     {txt}{' '}
                   </RegisterBtn>
@@ -218,7 +224,8 @@ class EmailPassAuthenticationScreen extends React.Component {
                 <Button
                   style={[styles.linkBtn, styles.centerBtn]}
                   onPress={() =>
-                    Linking.openURL(`https://www.facebook.com/yedidim.il/`)}
+                    Linking.openURL(`https://www.facebook.com/yedidim.il/`)
+                  }
                 >
                   <Image
                     style={styles.imgBtn}
