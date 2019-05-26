@@ -43,3 +43,7 @@ credentials.json
 
 # Firebase
 functions/firebase-debug.log
+
+**/shell-app.bundle
+**/shell-app-manifest.json
+**/AppConstants.java
