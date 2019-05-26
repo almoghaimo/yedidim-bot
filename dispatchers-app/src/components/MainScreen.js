@@ -20,7 +20,7 @@ import {
   Icon
 } from 'native-base'
 import EventsMain from '../components/EventsMain'
-import EventDetails from '../components/EventDetails'
+import EventDetailsMain from '../components/EventDetailsMain'
 import EventDetailsEditor from '../components/EventDetailsEditor'
 import EventsSearch from '../components/EventsSearch'
 import ProfileScreen from '../components/ProfileScreen'
@@ -29,14 +29,19 @@ import { ScreenType } from '../constants/consts'
 export const Screens = {
   [ScreenType.EventsList]: { screen: EventsMain, title: 'אירועים' },
   [ScreenType.EventDetails]: {
-    screen: EventDetails,
+    screen: EventDetailsMain,
+    title: 'פרטי אירוע',
+    backScreen: ScreenType.EventsList
+  },
+  [ScreenType.EventCreate]: {
+    screen: EventDetailsEditor,
     title: 'פרטי אירוע',
     backScreen: ScreenType.EventsList
   },
   [ScreenType.EventDetailsEditor]: {
     screen: EventDetailsEditor,
     title: 'פרטי אירוע',
-    backScreen: ScreenType.EventsList
+    backScreen: ScreenType.EventDetails
   },
   [ScreenType.EventsSearch]: { screen: EventsSearch, title: 'חיפוש' },
   [ScreenType.ProfileScreen]: { screen: ProfileScreen, title: 'משתמש' }
@@ -98,7 +103,8 @@ class MainScreen extends Component {
   }
 
   back() {
-    this.navigate(this.state.mainScreen)
+    const backScreen = Screens[this.state.activeScreen].backScreen
+    this.navigate(backScreen, { ...this.state.params })
   }
 
   render() {

@@ -42,6 +42,7 @@ class LoginScreen extends Component {
           </Label>
           <Input
             maxLength={3}
+            keyboardType="phone-pad"
             value={this.state.id}
             onChangeText={text => this.setState({ id: text, error: undefined })}
           />
@@ -52,6 +53,7 @@ class LoginScreen extends Component {
           </Label>
           <Input
             maxLength={10}
+            keyboardType="phone-pad"
             value={this.state.phone}
             onChangeText={text =>
               this.setState({ phone: text, error: undefined })

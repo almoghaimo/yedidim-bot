@@ -18,6 +18,8 @@ export const ScreenType = {
   EventDetails: 'EventDetails',
   EventDetailsEditor: 'EventDetailsEditor',
   EventsSearch: 'EventsSearch',
+  EventTimeline:'EventTimeline',
+  EventCreate:'EventCreate',
   ProfileScreen: 'ProfileScreen'
 }
 

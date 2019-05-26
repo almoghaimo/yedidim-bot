@@ -14,7 +14,7 @@ class EventsMain extends Component {
   }
 
   addNewEvent() {
-    this.props.navigate(ScreenType.EventDetailsEditor)
+    this.props.navigate(ScreenType.EventCreate)
   }
 
   render() {

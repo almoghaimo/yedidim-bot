@@ -29,6 +29,7 @@ functions/lib/email.js
 functions/lib/logger.js
 functions/lib/timeline.js
 functions/lib/notifications.js
+functions/lib/timeline.js
 functions/firebase-debug.log
 
 *.iml

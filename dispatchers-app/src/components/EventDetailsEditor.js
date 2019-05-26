@@ -399,7 +399,7 @@ class EventDetailsEditor extends Component {
             {this.renderInput('Plus Code מיקום דרך', 'plus_code')}
             {this.renderInput('פרטים', 'more')}
             {this.renderInput('מידע פרטי', 'private_info')}
-            {this.renderInput('טלפון', 'phone number', 'numeric')}
+            {this.renderInput('טלפון', 'phone number', 'phone-pad')}
             {this.renderInput('שם', 'caller name')}
           </Form>
           <Button
