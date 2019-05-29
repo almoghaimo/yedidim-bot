@@ -38,6 +38,7 @@ const userSnapshotToJSON = snapshot => ({
   role: snapshot.Role,
   locations: snapshot.Locations,
   radius: snapshot.Radius,
+  trackAnalytics: snapshot.TrackAnalytics,
   lastSeen: snapshot.LastSeen
 })
 
@@ -206,10 +207,33 @@ export const eventSnapshotToJSON = snapshot => {
   }
 }
 
-export async function loadLatestOpenEvents() {
+const trackAnalytics = ({ userId, type, value }) => {
+  setTimeout(() => {
+    try {
+      firebase
+        .database()
+        .ref(`analytics/${userId}/${type}`)
+        .push({
+          value,
+          timestamp: new Date().toString()
+        })
+    } catch (error) {
+      Sentry.captureException(error)
+    }
+  }, 500)
+}
+
+export async function loadLatestOpenEvents(shouldTrackAnalytics) {
   let coordinates = {
     latitude: '',
     longitude: ''
+  }
+
+  let startTime, locationTime, fetchTime
+
+  // TrackAnalytics
+  if (shouldTrackAnalytics) {
+    startTime = Date.now()
   }
 
   try {
@@ -223,6 +247,11 @@ export async function loadLatestOpenEvents() {
   } catch (error) {
     Sentry.captureException(error)
     // Do nothing, location is disabled
+  }
+
+  // TrackAnalytics
+  if (shouldTrackAnalytics) {
+    locationTime = Date.now()
   }
 
   const authToken = await firebase.auth().currentUser.getIdToken()
@@ -247,6 +276,20 @@ export async function loadLatestOpenEvents() {
   }
 
   const events = await response.json()
+
+  // TrackAnalytics
+  if (shouldTrackAnalytics) {
+    fetchTime = Date.now()
+
+    trackAnalytics({
+      userId: firebase.auth().currentUser.uid,
+      type: 'loadEvents',
+      value: {
+        locationTime: locationTime - startTime,
+        fetchTime: fetchTime - locationTime
+      }
+    })
+  }
 
   return events.map(event => eventSnapshotToJSON(event))
 }

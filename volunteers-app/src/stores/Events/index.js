@@ -48,7 +48,9 @@ export default types
     return {
       loadLatestOpenEvents: flow(function* loadLatestOpenEvents() {
         try {
-          const events = yield api.loadLatestOpenEvents()
+          const events = yield api.loadLatestOpenEvents(
+            getRoot(self).authStore.currentUser.trackAnalytics
+          )
           // TODO Receive events and only remove those that are not in list
           self.removeAllEvents(events)
           events.forEach(addEvent)

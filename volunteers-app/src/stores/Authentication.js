@@ -22,6 +22,7 @@ const CurrentUser = types
       types.enumeration('Role', ['volunteer', 'dispatcher', 'admin']),
       'volunteer'
     ),
+    trackAnalytics: types.optional(types.boolean, false),
     locations: types.optional(types.array(Location), []),
     radius: types.maybe(types.number),
     lastSeen: types.maybe(types.Date)
