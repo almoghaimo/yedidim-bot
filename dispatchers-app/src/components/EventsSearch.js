@@ -139,7 +139,6 @@ class EventsSearch extends Component {
                   EventsListColumn.Time,
                   EventsListColumn.Name,
                   EventsListColumn.Phone,
-                  EventsListColumn.CarType,
                   EventsListColumn.Case,
                   EventsListColumn.City
                 ]}

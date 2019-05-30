@@ -19,13 +19,29 @@ export const EventsListColumn = {
   Source: { id: 6, label: '' }
 }
 
+class CellEventDetail extends Component {
+  render() {
+    return (
+      <Text
+        style={getTextStyle(styles.cellText)}
+        allowFontScaling={false}
+        key={this.props.key}
+        numberOfLines={2}
+        ellipsizeMode={'tail'}
+      >
+        {this.props.data}
+      </Text>
+    )
+  }
+}
+
 class EventsList extends Component {
   openEventDetails(event) {
     this.props.navigate(ScreenType.EventDetails, { key: event.key })
   }
 
   renderRow(event, col) {
-    return (
+    return event.details ? (
       <Row
         style={[
           styles.row,
@@ -35,25 +51,30 @@ class EventsList extends Component {
         key={event.key + '_' + col.id}
       >
         {col === EventsListColumn.Time ? (
-          <Text style={getTextStyle(styles.cellText)} allowFontScaling={false}>
-            {formatEventTime(event)}
-          </Text>
+          <CellEventDetail
+            data={formatEventTime(event)}
+            key={`${event.key}_${EventsListColumn.Time}`}
+          />
         ) : col === EventsListColumn.Case ? (
-          <Text style={getTextStyle(styles.cellText)} allowFontScaling={false}>
-            {formatEventCategory(this.props.categories, event, false)}
-          </Text>
+          <CellEventDetail
+            data={formatEventCategory(this.props.categories, event, false)}
+            key={`${event.key}_${EventsListColumn.Time}`}
+          />
         ) : col === EventsListColumn.City ? (
-          <Text style={getTextStyle(styles.cellText)} allowFontScaling={false}>
-            {event.details.address}
-          </Text>
+          <CellEventDetail
+            data={event.details.address}
+            key={`${event.key}_${EventsListColumn.Time}`}
+          />
         ) : col === EventsListColumn.Name ? (
-          <Text style={getTextStyle(styles.cellText)} allowFontScaling={false}>
-            {event.details['caller name']}
-          </Text>
+          <CellEventDetail
+            data={event.details['caller name']}
+            key={`${event.key}_${EventsListColumn.Time}`}
+          />
         ) : col === EventsListColumn.Phone ? (
-          <Text style={getTextStyle(styles.cellText)} allowFontScaling={false}>
-            {event.details['phone number']}
-          </Text>
+          <CellEventDetail
+            data={event.details['phone number']}
+            key={`${event.key}_${EventsListColumn.Time}`}
+          />
         ) : col === EventsListColumn.Source ? (
           event.source === EventSource.FB_BOT ? (
             <Image
@@ -64,13 +85,16 @@ class EventsList extends Component {
             <Text style={getTextStyle(styles.cellText)} />
           )
         ) : col === EventsListColumn.CarType ? (
-          <Text style={getTextStyle(styles.cellText)} allowFontScaling={false}>
-            {event.details['car type']}
-          </Text>
+          <CellEventDetail
+            data={event.details['car type']}
+            key={`${event.key}_${EventsListColumn.Time}`}
+          />
         ) : (
           undefined
         )}
       </Row>
+    ) : (
+      <Row />
     )
   }
 
