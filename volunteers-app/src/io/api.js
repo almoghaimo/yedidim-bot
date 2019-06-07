@@ -1,8 +1,7 @@
 import firebase from 'firebase'
-import { Location, Permissions } from 'expo'
 import OneSignal from 'react-native-onesignal'
 import Sentry from 'sentry-expo'
-import { config, firebaseFunctionsUrl } from '../config'
+import { config, firebaseFunctionsUrl, REFRESH_TIMEOUT } from 'config'
 
 async function registerForPushNotificationsAsync(userId) {
   return new Promise(resolve => {
@@ -155,10 +154,8 @@ export async function signOut() {
 }
 
 export const eventSnapshotToJSON = snapshot => {
-  if (!snapshot.details) {
-    snapshot.details = {
-      geo: {}
-    }
+  if (!snapshot || !snapshot.details) {
+    return null
   }
 
   return {
@@ -223,50 +220,36 @@ const trackAnalytics = ({ userId, type, value }) => {
   }, 500)
 }
 
-export async function loadLatestOpenEvents(shouldTrackAnalytics) {
-  let coordinates = {
-    latitude: '',
-    longitude: ''
-  }
+const timeout = (promise, ms) =>
+  new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Timed out function in ${ms}`))
+    }, ms)
+    promise.then(resolve, reject)
+  })
 
-  let startTime, locationTime, fetchTime
+const latestEvents = async shouldTrackAnalytics => {
+  let startTime, fetchTime
 
   // TrackAnalytics
   if (shouldTrackAnalytics) {
     startTime = Date.now()
   }
 
-  try {
-    const { status } = await Permissions.askAsync(Permissions.LOCATION)
-    if (status === 'granted') {
-      const { coords } = await Location.getCurrentPositionAsync({
-        enableHighAccuracy: true
-      })
-      coordinates = coords
-    }
-  } catch (error) {
-    Sentry.captureException(error)
-    // Do nothing, location is disabled
-  }
-
-  // TrackAnalytics
-  if (shouldTrackAnalytics) {
-    locationTime = Date.now()
-  }
-
   const authToken = await firebase.auth().currentUser.getIdToken()
 
   // Sending location
   // Adding user id
-  const url = `${firebaseFunctionsUrl()}/loadLatestOpenEvents?authToken=${authToken}&latitude=${
-    coordinates.latitude
-  }&longitude=${coordinates.longitude}`
+  const url = `${firebaseFunctionsUrl()}/loadLatestOpenEvents?authToken=${authToken}`
 
   const response = await fetch(url, {
     method: 'GET',
     headers: {
       Accept: 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: 0
     }
   })
 
@@ -285,8 +268,7 @@ export async function loadLatestOpenEvents(shouldTrackAnalytics) {
       userId: firebase.auth().currentUser.uid,
       type: 'loadEvents',
       value: {
-        locationTime: locationTime - startTime,
-        fetchTime: fetchTime - locationTime
+        fetchTime: fetchTime - startTime
       }
     })
   }
@@ -294,11 +276,13 @@ export async function loadLatestOpenEvents(shouldTrackAnalytics) {
   return events.map(event => eventSnapshotToJSON(event))
 }
 
+export function loadLatestOpenEvents(shouldTrackAnalytics) {
+  return timeout(latestEvents(shouldTrackAnalytics), REFRESH_TIMEOUT)
+}
+
 export function subscribeToEvent(eventKey, onChangeCallback) {
   const callback = snapshot => {
-    if (snapshot && snapshot.val()) {
-      onChangeCallback(eventSnapshotToJSON(snapshot.val()))
-    }
+    onChangeCallback(eventSnapshotToJSON(snapshot && snapshot.val()))
   }
 
   firebase
@@ -322,7 +306,7 @@ export async function acceptEvent(eventKey, user) {
     .database()
     .ref(`events/${eventKey}`)
     .transaction(eventData => {
-      const { status } = eventData
+      const { status } = eventData || {}
       if (status === 'submitted' || status === 'sent') {
         // Assign event to user
         return {

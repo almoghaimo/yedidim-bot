@@ -243,7 +243,7 @@ const EventItem = observer(
 class HomeScreen extends Component {
   static navigationOptions = ({
     navigation,
-    screenProps: { toggleMute, isMuted }
+    screenProps: { toggleMute, isMuted, loadLatestOpenEvents, isLoadingEvents }
   }) => ({
     header: (
       <Header style={appStyles.navigationHeaderStyles}>
@@ -268,6 +268,13 @@ class HomeScreen extends Component {
           </FormattedMessage>
         </Body>
         <Right>
+          <Button
+            disabled={isLoadingEvents}
+            transparent
+            onPress={loadLatestOpenEvents}
+          >
+            <Icon style={{ color: 'white' }} name="md-refresh" />
+          </Button>
           <Button transparent onPress={toggleMute}>
             <Icon
               style={{ color: 'white' }}
@@ -279,52 +286,12 @@ class HomeScreen extends Component {
     )
   })
 
-  state = {
-    refreshing: false
-  }
-
   componentWillMount() {
     this.handleRefresh()
   }
 
-  timeoutRefreshStart = () => {
-    // Cancel previous timeout refresh
-    this.timeoutRefreshCancel()
-
-    this.timeoutId = setTimeout(() => {
-      // Remove all events from store
-      this.props.eventStore.removeAllEvents()
-      // Set as error
-      this.setState(() => ({
-        refreshing: false,
-        refreshError: true
-      }))
-    }, REFRESH_TIMEOUT)
-  }
-
-  timeoutRefreshCancel = () => {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId)
-    }
-  }
-
-  handleRefresh = async () => {
-    try {
-      this.setState(() => ({ refreshError: false, refreshing: true }))
-      // Start timeout refresh count, if time passes and events are
-      //  not loaded and blocked, we unblock the UI
-      this.timeoutRefreshStart()
-      await this.props.eventStore.loadLatestOpenEvents()
-    } catch (error) {
-      Sentry.captureException(error)
-      this.setState(() => ({ refreshError: true }))
-    } finally {
-      // Cancel timeout refresh
-      this.timeoutRefreshCancel()
-      this.setState(() => ({
-        refreshing: false
-      }))
-    }
+  handleRefresh = () => {
+    return this.props.eventStore.loadLatestOpenEvents()
   }
 
   handleEventItemPress = debounce(
@@ -341,11 +308,12 @@ class HomeScreen extends Component {
       eventStore: {
         hasEvents,
         sortedEventsByStatusAndTimestamp,
-        lastUpdatedDate
+        lastUpdatedDate,
+        isLoadingEvents,
+        loadingEventsError
       },
       currentUser
     } = this.props
-    const { refreshing, refreshError } = this.state
 
     return (
       <Container>
@@ -353,12 +321,12 @@ class HomeScreen extends Component {
           style={{ flex: 1 }}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isLoadingEvents}
               onRefresh={this.handleRefresh}
             />
           }
         >
-          {!refreshing && (
+          {!isLoadingEvents && (
             <StatusBar
               style={{
                 backgroundColor: currentUser.isMuted ? '#e75656' : '#63db63'
@@ -372,7 +340,7 @@ class HomeScreen extends Component {
               <BarItem>{format(lastUpdatedDate, 'H:mm')}</BarItem>
             </StatusBar>
           )}
-          {hasEvents && !refreshing && !refreshError && (
+          {hasEvents && !isLoadingEvents && !loadingEventsError && (
             <Content style={{ flex: 1 }}>
               <List
                 dataArray={sortedEventsByStatusAndTimestamp}
@@ -386,12 +354,12 @@ class HomeScreen extends Component {
               />
             </Content>
           )}
-          {!hasEvents && !refreshing && !refreshError && (
+          {!hasEvents && !isLoadingEvents && !loadingEventsError && (
             <MessageView>
               <Text>לא קיימים כעת אירועים פעילים</Text>
             </MessageView>
           )}
-          {refreshError && (
+          {loadingEventsError && (
             <MessageView>
               <Text
                 style={{

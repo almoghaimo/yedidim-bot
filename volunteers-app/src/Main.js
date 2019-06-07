@@ -106,6 +106,8 @@ export default inject(({ stores }) => ({
   isMuted: stores.authStore.currentUser && stores.authStore.currentUser.isMuted,
   isLoading: stores.isLoading,
   initAfterAuth: stores.eventStore.initAfterAuth,
+  loadLatestOpenEvents: stores.eventStore.loadLatestOpenEvents,
+  isLoadingEvents: stores.eventStore.isLoadingEvents,
   isOffline: stores.authStore.isOffline,
   drawerLockMode:
     stores.authStore.currentUser &&

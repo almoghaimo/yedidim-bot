@@ -1,6 +1,7 @@
-import { types, destroy, flow, getRoot } from 'mobx-state-tree'
+import { types, flow, getRoot } from 'mobx-state-tree'
 import * as api from 'io/api'
 import loadCategories from 'io/category'
+import Sentry from 'sentry-expo'
 import { trackEvent } from 'io/analytics'
 import Event from './Event'
 import Category from './Category'
@@ -10,7 +11,9 @@ export default types
     events: types.map(Event),
     categories: types.array(Category),
     isLoading: false,
-    lastUpdatedDate: new Date().getTime()
+    lastUpdatedDate: new Date().getTime(),
+    isLoadingEvents: false,
+    loadingEventsError: false
   })
   .views(self => ({
     findById(eventId) {
@@ -48,6 +51,10 @@ export default types
     return {
       loadLatestOpenEvents: flow(function* loadLatestOpenEvents() {
         try {
+          // Setting indication
+          self.isLoadingEvents = true
+          self.loadingEventsError = false
+
           const events = yield api.loadLatestOpenEvents(
             getRoot(self).authStore.currentUser.trackAnalytics
           )
@@ -58,12 +65,14 @@ export default types
         } catch (error) {
           // Error, cannot retrieve latest events, clean events tracked
           self.removeAllEvents()
-          // Rethrow error
-          throw error
+          self.loadingEventsError = true
+          Sentry.captureException(error)
+        } finally {
+          self.isLoadingEvents = false
         }
       }),
       removeEvent(eventId) {
-        destroy(self.events.get(eventId))
+        self.events.delete(eventId)
       },
       detachAllEvents: () => {
         self.events.values().forEach(event => event.detachEvent())

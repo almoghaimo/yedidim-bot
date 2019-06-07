@@ -1,5 +1,19 @@
 let GeoFire = require('geofire')
 
+exports.getLastLocation = (collectionName, admin, key) => {
+  let geoFire = new GeoFire(admin.database().ref(collectionName))
+
+  return geoFire
+    .get(key)
+    .then(location => {
+      console.log('retrieved geo for ' + collectionName + '/' + key, location)
+      return location
+    })
+    .catch(error => {
+      console.log(error)
+    })
+}
+
 exports.saveLocation = (collectionName, admin, key, location) => {
   let geoFire = new GeoFire(admin.database().ref(collectionName))
   if (!location[0] || !location[1]) {

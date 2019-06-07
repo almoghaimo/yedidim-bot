@@ -30,20 +30,17 @@ exports.loadLatestOpenEvents = async (req, res, admin) => {
   console.log('[LatestOpenEvents]', req.query)
 
   try {
-    const coords = ['latitude', 'longitude'].map(props =>
-      req.query[props] ? parseFloat(req.query[props]) : undefined
-    )
-
     const user = await admin.auth().verifyIdToken(req.query.authToken)
     const authToken =
       user.phone_number || user.email.replace('@yedidim.org', '')
 
+    // Retrieve last location for user
+    const coords =
+      (await geoHelper.getLastLocation('user_location', admin, authToken)) || []
+
     console.log('[LatestOpenEvents]', user, authToken, coords)
 
     if (coords[0] && coords[1]) {
-      // Save user location
-      await geoHelper.saveLocation('user_location', admin, authToken, coords)
-
       const nearEventIdToDistance = {}
       const geoFire = new GeoFire(
         admin

@@ -8,6 +8,7 @@ import { defineMessages } from 'react-intl'
 import OneSignal from 'react-native-onesignal'
 import Sentry from 'sentry-expo'
 import { eventSnapshotToJSON } from 'io/api'
+import { REFRESH_AFTER_BACKGROUND } from 'config'
 
 const newEventToast = defineMessages({
   button: {
@@ -19,6 +20,8 @@ const newEventToast = defineMessages({
     defaultMessage: 'New event received'
   }
 })
+
+let wentToBackground
 
 const withNotificationManager = WrappedComponent => {
   const Component = class extends React.Component {
@@ -67,11 +70,22 @@ const withNotificationManager = WrappedComponent => {
       // Add all events back to store and reattach listeners
       //  That will included events that came in while in notification
       this.props.attachAllEvents()
+
+      // If app stayed in foreground for more then 5 mins, refresh events
+      if (
+        wentToBackground &&
+        Date.now() - wentToBackground > REFRESH_AFTER_BACKGROUND
+      ) {
+        this.props.loadLatestOpenEvents()
+        wentToBackground = undefined
+      }
     }
 
     onAppToBackground = () => {
       // Remove and store all events from store (that will also remove subscription)
       this.props.detachAllEvents()
+      // Store when app went to background
+      wentToBackground = Date.now()
     }
 
     handleAppStateChange = nextAppState => {
@@ -109,23 +123,22 @@ const withNotificationManager = WrappedComponent => {
     }
 
     navigateToEvent = (eventData, locked) => {
-      const navigateAction = NavigationActions.reset({
-        index: locked ? 0 : 1,
-        actions: locked
-          ? [
-              NavigationActions.navigate({
-                routeName: 'Event',
-                params: eventData
-              })
-            ]
-          : [
-              NavigationActions.navigate({ routeName: 'Home' }),
-              NavigationActions.navigate({
-                routeName: 'Event',
-                params: eventData
-              })
-            ]
+      let navigateAction = NavigationActions.navigate({
+        routeName: 'Event',
+        params: eventData
       })
+
+      if (locked) {
+        navigateAction = NavigationActions.reset({
+          index: 0,
+          actions: [
+            NavigationActions.navigate({
+              routeName: 'Event',
+              params: eventData
+            })
+          ]
+        })
+      }
 
       this.props.navigation.dispatch(navigateAction)
     }
@@ -193,7 +206,7 @@ const withNotificationManager = WrappedComponent => {
             newEventToast.button
           ),
           type: 'warning',
-          duration: 20000,
+          duration: 10000,
           onClose: () => this.navigateToEvent({ eventId })
         })
       }
@@ -205,6 +218,7 @@ const withNotificationManager = WrappedComponent => {
         addEventFromNotification,
         detachAllEvents,
         attachAllEvents,
+        loadLatestOpenEvents,
         ...other
       } = this.props
 
@@ -216,6 +230,7 @@ const withNotificationManager = WrappedComponent => {
   Component.router = WrappedComponent.router
 
   return inject(({ stores }) => ({
+    loadLatestOpenEvents: stores.eventStore.loadLatestOpenEvents,
     detachAllEvents: stores.eventStore.detachAllEvents,
     attachAllEvents: stores.eventStore.attachAllEvents,
     addEventFromNotification: stores.eventStore.addEventFromNotification,

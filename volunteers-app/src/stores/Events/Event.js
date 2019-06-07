@@ -1,4 +1,11 @@
-import { types, flow, getRoot, getParent, getSnapshot } from 'mobx-state-tree'
+import {
+  types,
+  flow,
+  getRoot,
+  getParent,
+  getSnapshot,
+  isAlive
+} from 'mobx-state-tree'
 import GeoFire from 'geofire'
 import * as api from 'io/api'
 import { trackEvent } from 'io/analytics'
@@ -95,9 +102,19 @@ export default types
   }))
   .actions(self => ({
     onEventUpdated: flow(function* onEventUpdated(eventData) {
-      if (!eventData.id) {
-        // Event was removed (completed), data came back invalid, unsubscribe and do not update
-        self.beforeDestroy()
+      // If Mobx object not alive anymore, don't do any change
+      if (!isAlive(self)) {
+        return
+      }
+
+      if (
+        !eventData ||
+        !eventData.id ||
+        (eventData.status === 'completed' && !self.isAssigned)
+      ) {
+        // Event was completed now or some time ago, mark as completed
+        self.status = 'completed'
+        // setTimeout(() => self.remove(), 15000)
         return
       }
 
@@ -143,44 +160,28 @@ export default types
       })
       self.store.removeEvent(self.id)
     },
-    // TODO: Consolidate the 3 methods below in one method as the logic is the same
-    accept: flow(function* accept() {
+    execute: flow(function* execute(actionType) {
+      if (
+        !['finalise', 'accept', 'unaccept'].find(
+          action => action === actionType
+        )
+      ) {
+        throw new Error(`Invalid event action type ${actionType}`)
+      }
+
       // Retrieve current logged user id
       self.store.setLoading(true)
-      const results = yield api.acceptEvent(
-        self.id,
-        getRoot(self).authStore.currentUser
-      )
-      self.store.setLoading(false)
-      trackEvent('AcceptEvent', {
-        eventId: self.id
-      })
-      return results
-    }),
-    finalise: flow(function* finalise() {
-      // Retrieve current logged user id
-      self.store.setLoading(true)
-      const results = yield api.finaliseEvent(
-        self.id,
-        getRoot(self).authStore.currentUser
-      )
-      self.store.setLoading(false)
-      trackEvent('FinaliseEvent', {
-        eventId: self.id
-      })
-      return results
-    }),
-    unaccept: flow(function* unaccept() {
-      // Retrieve current logged user id
-      self.store.setLoading(true)
-      const results = yield api.unacceptEvent(
-        self.id,
-        getRoot(self).authStore.currentUser
-      )
-      self.store.setLoading(false)
-      trackEvent('UnacceptEvent', {
-        eventId: self.id
-      })
-      return results
+      try {
+        yield api[`${actionType}Event`](
+          self.id,
+          getRoot(self).authStore.currentUser
+        )
+
+        trackEvent(`${actionType}Event`, {
+          eventId: self.id
+        })
+      } finally {
+        self.store.setLoading(false)
+      }
     })
   }))

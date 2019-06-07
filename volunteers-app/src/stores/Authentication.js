@@ -243,11 +243,12 @@ const AuthenticationStore = types
       self.error = null
 
       try {
-        yield api.signOut()
         self.root.eventStore.removeAllEvents()
+        yield api.signOut()
         self.isLoading = false
         trackEvent('SignOutSuccess')
       } catch (error) {
+        Sentry.captureException(error)
         trackEvent('SignOutError', { error })
         self.error = error
         self.isLoading = false

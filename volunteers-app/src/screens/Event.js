@@ -197,7 +197,7 @@ class EventScreen extends Component {
                 transparent
                 onPress={() => {
                   trackEvent('Navigation', { page: 'Home' })
-                  navigation.navigate({ routeName: 'Home' })
+                  navigation.popToTop()
                 }}
               >
                 <Icon
@@ -269,7 +269,7 @@ class EventScreen extends Component {
     const { navigation } = this.props
 
     // Navigate back without removing event from list
-    navigation.goBack()
+    navigation.popToTop()
   }
 
   // supports finalise and cancel
@@ -281,9 +281,8 @@ class EventScreen extends Component {
     } = this.props
 
     // Execute action on event
-    await event[action]()
-    // Remove event from list of events
-    await event.remove()
+    await event.execute(action)
+
     // Navigate to home (resetting state)
     trackEvent('Navigation', { page: 'Home' })
     navigation.dispatch(
@@ -335,8 +334,8 @@ class EventScreen extends Component {
           }
         : () => {
             // Accept Event
-            event.accept().catch(({ code }) => {
-              if (code === 'event-taken') {
+            event.execute('accept').catch(error => {
+              if (error && error.code === 'event-taken') {
                 // Event was taken already, show alert message
                 Alert.alert(
                   intl.formatMessage(eventTakenMsgs.title),

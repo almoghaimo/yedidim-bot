@@ -197,7 +197,8 @@ const EventDetails = ({
                     marginTop: 3
                   }}
                   onPress={() =>
-                    Linking.openURL(`https://waze.com/ul?ll=${lat},${lon}`)}
+                    Linking.openURL(`https://waze.com/ul?ll=${lat},${lon}`)
+                  }
                 >
                   <FormattedMessage
                     id={
@@ -242,7 +243,7 @@ const EventDetails = ({
                 {text => <LabelText style={styles.textBold}>{text}</LabelText>}
               </FormattedMessage>
               <LabelText>{carType}</LabelText>
-              {privateInfo && <LabelText>{privateInfo}</LabelText>}
+              {!!privateInfo && <LabelText>{privateInfo}</LabelText>}
               <LabelText>{more}</LabelText>
             </View>
           </View>
@@ -283,31 +284,31 @@ const EventDetails = ({
                 <LabelText>למזעיק הסיוע</LabelText>
               </Button>
             </View>
-            {dispatcher &&
-              dispatcher.callCenterPhone && (
-                <View
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    width: '80%',
-                    alignSelf: 'center',
-                    paddingBottom: 20
-                  }}
+            {dispatcher && !!dispatcher.callCenterPhone && (
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  width: '80%',
+                  alignSelf: 'center',
+                  paddingBottom: 20
+                }}
+              >
+                <Button
+                  style={styles.linkBtn}
+                  onPress={() =>
+                    Linking.openURL(`tel:${dispatcher.callCenterPhone}`)
+                  }
                 >
-                  <Button
-                    style={styles.linkBtn}
-                    onPress={() =>
-                      Linking.openURL(`tel:${dispatcher.callCenterPhone}`)}
-                  >
-                    <Image
-                      style={styles.imgBtn}
-                      source={require('../../assets/icons/icon_call.png')}
-                    />
-                    <LabelText>התקשר למוקד</LabelText>
-                  </Button>
-                </View>
-              )}
+                  <Image
+                    style={styles.imgBtn}
+                    source={require('../../assets/icons/icon_call.png')}
+                  />
+                  <LabelText>התקשר למוקד</LabelText>
+                </Button>
+              </View>
+            )}
           </View>
         )}
       </View>
