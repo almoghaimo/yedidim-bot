@@ -555,7 +555,7 @@ export function loadDispatcher(dispatcherId) {
         dispatch(
           setDispatcher({
             id: dispatcherId,
-            name: dispatcher.name
+            name: dispatcher ? dispatcher.name : ''
           })
         )
       })

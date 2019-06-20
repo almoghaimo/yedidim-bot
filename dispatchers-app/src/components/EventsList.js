@@ -10,23 +10,51 @@ import {
 import { EventSource, ScreenType } from '../constants/consts'
 
 export const EventsListColumn = {
-  Time: { id: 0, label: 'זמן' },
-  Name: { id: 1, label: 'שם' },
-  Phone: { id: 2, label: 'טלפון' },
-  Case: { id: 3, label: 'בעיה' },
-  City: { id: 4, label: 'כתובת' },
-  CarType: { id: 5, label: 'סוג רכב' },
-  Source: { id: 6, label: '' }
+  Time: { id: 0, label: 'זמן', data: event => formatEventTime(event) },
+  Name: {
+    id: 1,
+    label: 'שם',
+    data: (event, categories) => formatEventCategory(categories, event, false)
+  },
+  Phone: { id: 2, label: 'טלפון', data: event => event.details.address },
+  Case: {
+    id: 3,
+    label: 'בעיה',
+    data: event => event.details['caller name']
+  },
+  City: {
+    id: 4,
+    label: 'כתובת',
+    data: event => event.details['phone number']
+  },
+  CarType: {
+    id: 5,
+    label: 'סוג רכב',
+    data: event => event.details['car type']
+  },
+  Source: {
+    id: 6,
+    label: '',
+    data: event =>
+      event.source === EventSource.FB_BOT ? (
+        <Image
+          style={styles.fbImage}
+          source={require('../../assets/images/bot-icon.png')}
+        />
+      ) : (
+        <Text style={getTextStyle(styles.cellText)} />
+      )
+  }
 }
 
-const CellEventDetail = () => (
+const CellEventDetail = props => (
   <Text
     style={getTextStyle(styles.cellText)}
     allowFontScaling={false}
     numberOfLines={2}
     ellipsizeMode={'tail'}
   >
-    {this.props.children}
+    {props.children}
   </Text>
 )
 
@@ -45,32 +73,9 @@ class EventsList extends Component {
         onPress={this.openEventDetails.bind(this, event)}
         key={event.key + '_' + col.id}
       >
-        {col === EventsListColumn.Time ? (
-          <CellEventDetail>{formatEventTime(event)}</CellEventDetail>
-        ) : col === EventsListColumn.Case ? (
-          <CellEventDetail>
-            {formatEventCategory(this.props.categories, event, false)}
-          </CellEventDetail>
-        ) : col === EventsListColumn.City ? (
-          <CellEventDetail>{event.details.address}</CellEventDetail>
-        ) : col === EventsListColumn.Name ? (
-          <CellEventDetail>{event.details['caller name']}</CellEventDetail>
-        ) : col === EventsListColumn.Phone ? (
-          <CellEventDetail>{event.details['phone number']}</CellEventDetail>
-        ) : col === EventsListColumn.Source ? (
-          event.source === EventSource.FB_BOT ? (
-            <Image
-              style={styles.fbImage}
-              source={require('../../assets/images/bot-icon.png')}
-            />
-          ) : (
-            <Text style={getTextStyle(styles.cellText)} />
-          )
-        ) : col === EventsListColumn.CarType ? (
-          <CellEventDetail data={event.details['car type']} />
-        ) : (
-          undefined
-        )}
+        <CellEventDetail>
+          {col.data(event, this.props.categories)}
+        </CellEventDetail>
       </Row>
     ) : (
       <Row />
