@@ -23,6 +23,9 @@ import {
 } from '../actions/geocodingActions'
 import { sendNotification } from '../actions/notificationsActions'
 
+import Autocomplete from './AutoComplete'
+import carsTypeList from '../../cars_type_list'
+
 class KeyboardAwareScrollViewComponent extends React.Component {
   render() {
     if (Platform.OS === 'ios') {
@@ -315,6 +318,37 @@ class EventDetailsEditor extends Component {
     )
   }
 
+  renderCarType(label, field, type = 'default') {
+    const suggestions = carsTypeList.map(item => item.label)
+
+    // return <Autocomplete suggestions={suggestions} />
+
+    return(
+      <View floatingLabel style={styles.item}>
+        <Autocomplete suggestions={suggestions} />
+      </View>
+    )
+
+    //     <Input
+    //       value={details[field]}
+    //       keyboardType={type}
+    //       onChangeText={value => {
+    //         // value += 'yo'
+    //
+    //         const filteredSuggestions = carsTypeList.filter(
+    //           suggestion =>
+    //             suggestion.label.toLowerCase().indexOf(value.toLowerCase()) > -1
+    //         );
+    //
+    //         this.updateEventData({
+    //           [field]: type === 'numeric' ? value.trim() : value
+    //         })
+    //       }}
+    //     />
+    //   </Item>
+    // )
+  }
+
   hideGooglePlacesSuggestions() {
     this.setState({ listViewDisplayed: false })
   }
@@ -395,7 +429,7 @@ class EventDetailsEditor extends Component {
             {this.renderCategoryPicker()}
             {this.renderSubCategoryPicker()}
             {details.subCategory !== 'SlammedDoor' &&
-              this.renderInput('סוג רכב', 'car type')}
+            this.renderCarType('סוג רכב', 'car type')}
             {this.renderInput('Plus Code מיקום דרך', 'plus_code')}
             {this.renderInput('פרטים', 'more')}
             {this.renderInput('מידע פרטי', 'private_info')}
